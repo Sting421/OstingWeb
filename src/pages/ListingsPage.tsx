@@ -1,88 +1,30 @@
-import { useState } from 'react';
-import { Search, MapPin, Heart, Star, ChevronDown, Home as HomeIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, MapPin, Heart, Star, ChevronDown, Home as HomeIcon, X, Calendar, DollarSign, Clock, Check } from 'lucide-react';
+import axios from 'axios';
 import '../components/ListingsPage.css';
 
-// Mock data for property listings
-const mockListings = [
-  {
-    id: 1,
-    title: 'Dream House Realty',
-    location: 'Westwood, Austin, TX',
-    price: 367000,
-    rating: 4.8,
-    reviews: 124,
-    beds: 4,
-    baths: 3,
-    sqft: 2450,
-    type: 'Single Family Home',
-    image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 2,
-    title: 'Algo Langli Homes',
-    location: 'Cedar Park, Austin, TX',
-    price: 278000,
-    rating: 4.7,
-    reviews: 98,
-    beds: 3,
-    baths: 2,
-    sqft: 1850,
-    type: 'Townhouse',
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1475&q=80'
-  },
-  {
-    id: 3,
-    title: 'Midnight Ridge Villa',
-    location: 'Round Rock, Austin, TX',
-    price: 452000,
-    rating: 4.9,
-    reviews: 156,
-    beds: 5,
-    baths: 3,
-    sqft: 2850,
-    type: 'Single Family Home',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 4,
-    title: 'Unity Urban Homes',
-    location: 'Downtown, Austin, TX',
-    price: 378000,
-    rating: 4.6,
-    reviews: 87,
-    beds: 3,
-    baths: 2,
-    sqft: 1650,
-    type: 'Condo',
-    image: 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 5,
-    title: 'Lakefront Thick Villa',
-    location: 'Lake Travis, Austin, TX',
-    price: 578000,
-    rating: 4.9,
-    reviews: 203,
-    beds: 5,
-    baths: 4,
-    sqft: 3200,
-    type: 'Luxury Home',
-    image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80'
-  },
-  {
-    id: 6,
-    title: 'Modern Suburban Estate',
-    location: 'Pflugerville, Austin, TX',
-    price: 425000,
-    rating: 4.7,
-    reviews: 112,
-    beds: 4,
-    baths: 3,
-    sqft: 2350,
-    type: 'Single Family Home',
-    image: 'https://images.unsplash.com/photo-1592595896616-c37162298647?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-  }
-];
+// Property listing interface
+interface PropertyListing {
+  id: number;
+  title: string;
+  location: string;
+  price: number;
+  rating: number;
+  reviews: number;
+  beds: number;
+  baths: number;
+  sqft: number;
+  type: string;
+  image: string;
+  description: string;
+  yearBuilt: number | string;
+  lotSize: string;
+  garage: string;
+  amenities: string[];
+  schools: string[];
+  agent: string;
+  availableFrom: string;
+}
 
 // Price range filter options
 const priceRanges = [
@@ -112,7 +54,7 @@ const amenities = [
   'Fireplace'
 ];
 
-function PropertyCard({ listing }: { listing: any }) {
+function PropertyCard({ listing, onViewClick }: { listing: any, onViewClick: (listing: any) => void }) {
   return (
     <div className="property-card">
       <div className="property-image">
@@ -150,18 +92,215 @@ function PropertyCard({ listing }: { listing: any }) {
             <span className="feature-label">Sq.ft</span>
           </div>
         </div>
-        <button className="view-btn">View</button>
+        <button className="view-btn" onClick={() => onViewClick(listing)}>View</button>
+      </div>
+    </div>
+  );
+}
+
+function PropertyDetails({ listing, onClose }: { listing: any, onClose: () => void }) {
+  if (!listing) return null;
+  
+  return (
+    <div className="property-details-sidebar">
+      <div className="details-header">
+        <h2>Property Details</h2>
+        <button className="close-btn" onClick={onClose}>
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      
+      <div className="details-image">
+        <img src={listing.image} alt={listing.title} />
+      </div>
+      
+      <div className="details-content">
+        <h3 className="details-title">{listing.title}</h3>
+        <div className="details-location">
+          <MapPin className="h-4 w-4 text-blue-600" />
+          <span>{listing.location}</span>
+        </div>
+        <div className="details-price">${listing.price.toLocaleString()}</div>
+        
+        <div className="details-features">
+          <div className="details-feature">
+            <span className="feature-value">{listing.beds}</span>
+            <span className="feature-label">Beds</span>
+          </div>
+          <div className="details-feature">
+            <span className="feature-value">{listing.baths}</span>
+            <span className="feature-label">Baths</span>
+          </div>
+          <div className="details-feature">
+            <span className="feature-value">{listing.sqft}</span>
+            <span className="feature-label">Sq.ft</span>
+          </div>
+        </div>
+        
+        <div className="details-section">
+          <h4>Description</h4>
+          <p>{listing.description}</p>
+        </div>
+        
+        <div className="details-section">
+          <h4>Property Information</h4>
+          <div className="details-info-item">
+            <Calendar className="h-4 w-4 text-blue-600" />
+            <span className="info-label">Year Built:</span>
+            <span className="info-value">{listing.yearBuilt}</span>
+          </div>
+          <div className="details-info-item">
+            <MapPin className="h-4 w-4 text-blue-600" />
+            <span className="info-label">Lot Size:</span>
+            <span className="info-value">{listing.lotSize}</span>
+          </div>
+          <div className="details-info-item">
+            <HomeIcon className="h-4 w-4 text-blue-600" />
+            <span className="info-label">Garage:</span>
+            <span className="info-value">{listing.garage}</span>
+          </div>
+          <div className="details-info-item">
+            <DollarSign className="h-4 w-4 text-blue-600" />
+            <span className="info-label">Price per Sq.ft:</span>
+            <span className="info-value">${Math.round(listing.price / listing.sqft)}</span>
+          </div>
+          <div className="details-info-item">
+            <Clock className="h-4 w-4 text-blue-600" />
+            <span className="info-label">Available From:</span>
+            <span className="info-value">{listing.availableFrom}</span>
+          </div>
+        </div>
+        
+        <div className="details-section">
+          <h4>Amenities</h4>
+          <div className="amenities-list">
+            {listing.amenities && listing.amenities.map((amenity: string, index: number) => (
+              <div key={index} className="amenity-item">
+                <Check className="h-4 w-4 text-green-600" />
+                <span>{amenity}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="details-section">
+          <h4>Schools</h4>
+          <div className="schools-list">
+            {listing.schools && listing.schools.map((school: string, index: number) => (
+              <div key={index} className="school-item">
+                <span>{school}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="details-section">
+          <h4>Contact</h4>
+          <div className="contact-info">
+            <p>Listing Agent: {listing.agent}</p>
+            <button className="contact-btn">Contact Agent</button>
+            <button className="schedule-btn">Schedule Viewing</button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 function ListingsPage() {
-  const [filteredListings, setFilteredListings] = useState(mockListings);
+  const [listings, setListings] = useState<PropertyListing[]>([]);
+  const [filteredListings, setFilteredListings] = useState<PropertyListing[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<number[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [showDetailsSidebar, setShowDetailsSidebar] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch property listings from RapidAPI
+  useEffect(() => {
+    const fetchListings = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // const options = {
+        //   method: 'GET',
+        //   url: 'https://zillow-working-api.p.rapidapi.com/search/byaddress',
+        //   params: {
+        //     location: 'Austin Texas',
+        //     page: '1',
+        //     sortOrder: 'Homes_for_you',
+        //     listingStatus: 'For_Sale',
+        //     bed_min: 'No_Min',
+        //     bed_max: 'No_Max',
+        //     bathrooms: 'Any',
+        //     homeType: 'Houses, Townhomes, Multi-family, Condos/Co-ops, Lots-Land, Apartments, Manufactured'
+        //   },
+        //   headers: {
+        //     'X-RapidAPI-Key': import.meta.env.VITE_RAPIDAPI_KEY || 'fc33d176bdmsh77abb4787653b11p100a6cjsn63a64fd53e22',
+        //     'X-RapidAPI-Host': import.meta.env.VITE_RAPIDAPI_HOST || 'zillow-working-api.p.rapidapi.com'
+        //   }
+        // };
+        
+        const response = await axios.request(options);
+        console.log('RapidAPI response:', response.data);
+        
+        // Transform the API response to match our data structure
+        if (response.data && response.data.results && Array.isArray(response.data.results)) {
+          const transformedData: PropertyListing[] = response.data.results.map((item: any, index: number) => ({
+            id: index + 1,
+            title: item.buildingName || item.streetAddress || 'Property Listing',
+            location: `${item.city || 'Austin'}, ${item.state || 'TX'}`,
+            price: item.price ? parseInt(item.price.replace(/[^\d]/g, '')) : 0,
+            rating: (Math.random() * (5 - 4) + 4).toFixed(1), // Random rating between 4.0-5.0
+            reviews: Math.floor(Math.random() * 200) + 50, // Random number of reviews
+            beds: item.bedrooms || 0,
+            baths: item.bathrooms || 0,
+            sqft: item.livingArea || 0,
+            type: item.homeType || 'Single Family Home',
+            image: item.imgSrc || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80',
+            description: item.description || 'Beautiful property with modern amenities and convenient location.',
+            yearBuilt: item.yearBuilt || 'N/A',
+            lotSize: item.lotSize ? `${item.lotSize} acres` : 'N/A',
+            garage: item.hasGarage ? '2-car attached' : 'No garage',
+            amenities: ['Central AC', 'Fireplace', 'Hardwood Floors', 'Fenced Yard', 'Patio'],
+            schools: ['Local Elementary (8/10)', 'Local Middle School (7/10)', 'Local High (8/10)'],
+            agent: item.brokerName || 'Local Real Estate Agent',
+            availableFrom: 'Immediately'
+          }));
+          
+          setListings(transformedData);
+          setFilteredListings(transformedData);
+        } else {
+          throw new Error('API response format unexpected');
+        }
+      } catch (err) {
+        console.error('Error fetching property listings:', err);
+        setError('Failed to load property listings from API. Please try again later.');
+        // Do not fallback to mock data, show error instead
+        setListings([]);
+        setFilteredListings([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchListings();
+  }, []);
+  
+  // Handle View button click
+  const handleViewClick = (listing: any) => {
+    setSelectedListing(listing);
+    setShowDetailsSidebar(true);
+  };
+  
+  // Close details sidebar
+  const handleCloseSidebar = () => {
+    setShowDetailsSidebar(false);
+  };
   
   // Filter listings based on search term and selected filters
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,7 +368,7 @@ function ListingsPage() {
     types: string[], 
     amenityList: string[]
   ) => {
-    let results = mockListings;
+    let results = listings;
     
     // Apply search term filter
     if (term) {
@@ -271,11 +410,11 @@ function ListingsPage() {
     setSelectedPriceRanges([]);
     setSelectedTypes([]);
     setSelectedAmenities([]);
-    setFilteredListings(mockListings);
+    setFilteredListings(listings);
   };
   
   return (
-    <div className="listings-page">
+    <div className={`listings-page ${showDetailsSidebar ? 'with-sidebar' : ''}`}>
       <div className="listings-header">
         <h1>Real Estate Listings</h1>
         <div className="search-bar">
@@ -387,7 +526,11 @@ function ListingsPage() {
         <div className="properties-container">
           <div className="properties-header">
             <div className="results-count">
-              Showing {filteredListings.length} properties
+              {isLoading ? (
+                <span>Loading properties...</span>
+              ) : (
+                <span>Showing {filteredListings.length} properties</span>
+              )}
             </div>
             <div className="sort-options">
               <span>Sort by:</span>
@@ -400,12 +543,39 @@ function ListingsPage() {
             </div>
           </div>
           
-          <div className="properties-grid">
-            {filteredListings.map(listing => (
-              <PropertyCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="loading-container">
+              <p>Loading property listings...</p>
+            </div>
+          ) : error ? (
+            <div className="error-container">
+              <p>{error}</p>
+            </div>
+          ) : (
+            <div className="properties-grid">
+              {filteredListings.length > 0 ? (
+                filteredListings.map(listing => (
+                  <PropertyCard 
+                    key={listing.id} 
+                    listing={listing} 
+                    onViewClick={handleViewClick}
+                  />
+                ))
+              ) : (
+                <div className="no-results">
+                  <p>No properties match your search criteria.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+        
+        {showDetailsSidebar && (
+          <PropertyDetails 
+            listing={selectedListing} 
+            onClose={handleCloseSidebar}
+          />
+        )}
       </div>
     </div>
   );

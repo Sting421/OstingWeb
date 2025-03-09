@@ -6,8 +6,8 @@ function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-blue-600 mb-4">Welcome to Austin McClain Real Estate</h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">Your trusted partner in finding the perfect property in Austin, Texas.</p>
+        <h1 className="text-4xl font-bold text-blue-600 mb-4">Austin McClain</h1>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto">YOUR TRUSTED REAL ESTATE AGENT IN OHIO.</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
